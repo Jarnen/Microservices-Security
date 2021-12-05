@@ -1,8 +1,127 @@
 Docker Threat Modeling
 Given Docker's system components and the STRIDE framework, identify five potential threats that may arise.
+Attack Surfaces;
+1: Docker Host - Namespace Isolation & Container Escape Attacks
+Potential Threat:   Tampering - Docker host namespace isolation tampering.
+Risk:               Tampering of namespace isolation will result in container breakout can happen when isolation checks have been bypassed.
+Reason:             Containers use single kernel on host. Hence, isolation is vital to limit container processes.
+Prevention:         Avoid using --privileged flag
+
+2: Docker Host - Insecure Defaults
+Potential Threat:   Tampering of the host.
+Risk:               Tampering the containers can be done by an attacker if insecure defaults are not properly disabled.
+Reason:             By default, containers capabilities are set to all. These can be used by an attacker to tamper the system.
+Prevention:         Give containers individual capabilities by dropping all capabilies (--cap-drop=all) and add specific capabilies 
+                    (--cap-add=LIST_OF_CAPABILITIES) to each containers.
+
+3: Docker Host - Misconfiguration
+Potential Threat:   Elevation of Privilege where an attacker may attempt to abuse regular user's login to escalate privilege to an admin login.
+Risk:               Once an attacker can abuse this access levels to his/her own advantage/course.
+Prevention:         Ensure Host configurations are set to meet the security standards.
+                    Use the SELinux in enforcing mode.
+
+4: Docker Registry - Image Security
+Potential Threat:   Spoofing and Tampering of the docker registry used for the images.
+Risk:               System can be compromised if images containing authentication secrets are exposed.
+                    Spoofed images can be introduced by an attacker.
+Reason:             Docker image contains layer of software manifests and tarballs that together forms a container unit. These layers consists of manifests and libraries
+                    that can have vulnerabilities.
+Prevention:         Harden the image by handling secrets properly, minimize the use of 3rd party software and use verifiable ones to avoid introducing malicious software to the 
+                    container environment.
+                    Use Docker Content Trust to sign the image.
+                    Use/Compare image digest sha256 hash to to verify public images with one provided by image repository.
+
+5: Docker Client - Security & Compromise
+Potential Threat:   Elevation of Privilege, Spoofing and or Tampering can occure when an engineer's client machine is compromised.
+Risk:               An engineers machine which is used as a docker client can be compromised.
+Reason:             Docker client is not patched or the operating system is not hardened.
+Prevention:         Run latest patches of the docker client
+                    Run an antivirus or endpoint detection and response (EDR) software.
+                    Avoid using --privileged flag when running commands
+                    Harden the client computer
+
 
 Kubernetes Threat Modeling
 Given Kubernetes' system components and the STRIDE framework, identify five potential threats that may arise.
+1: Kube API Server - Internet and Access 
+Potential Threat:   Elevation of Privilege connecting to console
+Risk:               An attacker may try to abuse a users login to escalate privilege. This can allow them to things that they are not authorised to do.
+Reason:             Kube API server is the gateway for the Kube Control Plain to the outside world.
+Prevention:         Remove Internet access to the master; disable basic authentication and anonymous access to the console.
+
+2: Kube Controller Manager - Access and Requests
+Potential Threat:   Elevation of Privilege and Spoofing
+Risk:               If accounts permissions are not specified, an attacker can attempt to login as an administrator without authorisation.
+Reason:             Service Account & Token controllers create default accounts and API access tokens for new namespaces. 
+Prevention:         Use service account credentials with RBAC to minimally scope the account permissions to the kube-controller-manager.
+
+3: ETCD - configurations Tampering
+Potential Threat:   Tampering and Discloser of Information.
+Risk:               An attacker might attampt to tamper the configuration files to criple the system. And also unencripted files can be leaked leading to Information Discloser.
+Reason:             ETCD stores all configurations of Kubernetes as key-value store.
+Prevention:         Enforce IPtables to allow traffic from kube-api server only. Encrypt all data at rest, and disallow self-signed certs and allow only certificate authority issued certs.
+
+4: Kube-scheduler - Information Discloser and Spoofing
+Potential Threat:   Information Discloser and Spoofing
+Risk:               If profiling is not disabled, profiling can leak system details. If extenal communication is allowed, this can affect the sheduling of pods and nodes.
+Reason:             Kube-scheduler should be concerned with scheduling pods and assigning them to nodes and communicating with api server primarily.
+Prevention:         Disable other external communications, disable profiling and only turn on when needed.
+
+5: Python Service - Open Source Applications vulnerabilities
+Potential Threat:   The service can have potentialy harmful and vulnerable modules and manifests.
+Risk:               This vulnerabilities can open a door for attackers to enter or cause harm to the System
+Reason:             This python application service is vulnerable.
+Prevention:         The service vulnerabilities should be checked and updated as soon as possible to avoid system compromised
+
 
 Docker-bench Run Results and Analysis
-From the failed findings, select and document 3 findings from the Docker-bench results that you want to harden based on the 5 attack surface areas you identified in Step 1. At least 1 of the 3 hardened findings should be different from the ones mentioned in the exercise (i.e. 5.10, 5.14, and 5.22).
+From the failed findings, select and document 3 findings from the Docker-bench results that you want to harden based on the 5 attack surface areas 
+you identified in Step 1. At least 1 of the 3 hardened findings should be different from the ones mentioned in the exercise (i.e. 5.10, 5.14, and 5.22).
+
+Remediate Docker-bench Failed Findings
+1:  [FAIL] 1.1.3 - Ensure auditing is configured for the Docker daemon (Automated)
+    According to the CIS Docker Benchmark (provided courtesy of the Center for Internet Security) on section of CIS Docker Benchmark v1.2.0, 
+        "As well as auditing the normal Linux file system and system calls, you should also audit the
+        Docker daemon. Because this daemon runs with root privileges. It is very important to
+        audit its activities and usage."
+    Harden Steps:
+        - Added the line below (without quotes) to the /etc/audit/audit.rules file;
+                "-w /usr/bin/dockerd -k docker"
+        - Then, restart the audit daemon using the following command (without quotes);
+                "service auditd restart"
+
+2:  [FAIL] 4.5 - Ensure Content trust for Docker is Enabled (Scored)
+    According to the CIS Docker Benchmark (provided courtesy of the Center for Internet Security) on section of CIS Docker Benchmark v1.2.0, 
+        "Content trust provides the ability to use digital signatures for data sent to and received
+        from remote Docker registries. These signatures allow client-side verification of the
+        identity and the publisher of specific image tags and ensures the provenance of container
+        images."
+    Harden Steps:
+        - Install Notary Server to handle certificate signing by following the below steps:
+            1. Cloning the notary repo:
+            2. cd in Notary directory
+            3. Create a key with "docker trust key generate" command with specified directory to keep the key
+            4. Brought up the Notary server by "docker-compose up -d" command.
+            5. Added the trust signer key by executing "docker trust signer add --key" command with directory and name of key specified at step 3
+            6. Added below lines to "/etc/environment" to load docker content trust.
+                DOCKER_CONTENT_TRUST_SERVER=https://notary.docker.io
+                DOCKER_CONTENT_TRUST=1
+
+
+3:  Fail 5.31 - Ensure that the Docker socket is not mounted inside any containers (Scored)
+    According to the CIS Docker Benchmark (provided courtesy of the Center for Internet Security) on section of CIS Docker Benchmark v1.2.0, 
+        "If the Docker socket is mounted inside a container it could allow processes running within
+        the container to execute Docker commands which would effectively allow for full control of
+        the host."
+
+     Harden Steps:
+        - By default, docker.sock is not mounted inside containers. However, my check showed that this was failing. 
+        - Hence, I applied the steps in [3.16] of CIS Docker Benchmark v1.2.0, "3.16 Ensure that the Docker socket file permissions are set to 660 or
+          more restrictively (Scored)".
+          That is: 
+            "Only root and the members of the docker group should be allowed to read and write to the
+            default Docker Unix socket. The Docker socket file should therefore have permissions of
+            660 or more restrictive permissions."
+        - So executed the following command to restrict access to the "/var/run/docker.sock"
+                 sudo chmod 660 /var/run/docker.sock
+

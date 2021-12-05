@@ -1,0 +1,16 @@
+Kubernetes-specific Test Plan 
+The most important aspect of hardening is making sure the hardening does not negatively affect system stability. 
+The last thing we want is for our hardening to lead to an outage of the cluster. Hence, we should have a test plan in place to implement
+hardening steps. Two things we should consider are how we will test and how to ensure the changes does not negatively affect our cluster.
+
+Our cluster should have a production and development (or test environment) environment. These two environments should be of replica to each other.
+Before applying a hardening change to the production environment, it should be applied to the development environment. After tests confirmed
+ok in the development environment, then it can be applied to the production environment. 
+
+There should be a checklist to check the cluster components and services that would be affected. This checks should be done before and 
+after the change is done to confirm if the change does not cause any unforseen service outage. A reverse plan should be inpalce to revert the 
+changes if environment is negatively affected. Finaly and also important, the cluster should have backups incase a restore is needed in a worst
+case scenario.
+
+
+
