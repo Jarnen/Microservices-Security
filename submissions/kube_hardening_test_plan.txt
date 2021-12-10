@@ -4,12 +4,12 @@ The last thing we want is for our hardening to lead to an outage of the cluster.
 hardening steps. Two things we should consider are how we will test and how to ensure the changes does not negatively affect our cluster.
 
 Our cluster should have a production and development (or test environment) environment. These two environments should be of replica to each other.
-Before applying a hardening change to the production environment, it should be applied to the development environment. After tests confirmed
-ok in the development environment, then it can be applied to the production environment. 
+Before applying a hardening change to the production environment, it should be applied to the development environment. After all tests are confirmed
+to be successful in the development environment, then it can be applied to the production environment.
 
-There should be a checklist to check the cluster components and services that would be affected. This checks should be done before and 
-after the change is done to confirm if the change does not cause any unforseen service outage. A reverse plan should be inpalce to revert the 
-changes if environment is negatively affected. Finaly and also important, the cluster should have backups incase a restore is needed in a worst
+There should be a checklist to check the cluster components and services that would be affected. These checks should be done before and
+after the change is done to confirm if the change does not cause any unforeseen service outage. A reverse plan should be inplace to revert the
+changes if environment is negatively affected. Finally, and also important, the cluster should have backups in case a restore is needed in worst
 case scenario.
 
 

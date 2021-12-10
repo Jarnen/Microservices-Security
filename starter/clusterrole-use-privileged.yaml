@@ -1,0 +1,41 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: use-privileged-psp
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - default-psp
+---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: privileged-role-bind
+    namespace: default
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: use-privileged-psp
+  subjects:
+  - kind: ServiceAccount
+    name: falco
+  - kind: ServiceAccount
+    name: falco-exporter
+  - kind: ServiceAccount
+    name: prometheus-operator-1638806008-grafana
+  - kind: ServiceAccount
+    name: prometheus-operator-1638806008-grafana-test
+  - kind: ServiceAccount
+    name: prometheus-operator-163880-prometheus
+  - kind: ServiceAccount
+    name: prometheus-operator-163880-alertmanager
+  - kind: ServiceAccount
+    name: prometheus-operator-163880-operator
+  - kind: ServiceAccount
+    name: prometheus-operator-1638806008-kube-state-metrics
+  - kind: ServiceAccount
+    name: prometheus-operator-1638806008-prometheus-node-exporter
+    

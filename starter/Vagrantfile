@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
       # configure the parameters for VirtualBox provider
       node.vm.provider "virtualbox" do |v|
         v.name = "node#{i}"
-        v.memory = 2048
+        v.memory = 4048
         v.cpus = 2
       end
 
@@ -32,6 +32,25 @@ Vagrant.configure("2") do |config|
       systemctl enable docker
       usermod -G docker -a $USER
       systemctl restart docker
+      # dasable firewall
+      # echo "[TASK 2] Disable firewalld"
+      # systemctl stop firewalld
+      # systemctl disable firewalld
+      # # disable apparmor
+      # echo "[TASK 3] Disable apparmor"
+      # systemctl stop apparmor
+      # systemctl disable apparmor
+      # # set up rke user
+      # echo "[TASK 4] Set up rke user"
+      # useradd rke
+      # usermod -a -G docker rke
+      # systemctl restart docker
+      # # copy auth_keys for rke user
+      # echo "[TASK 5] Copy auth_keys for rke user"
+      # mkdir -p /home/rke/.ssh
+      # usermod -d /home/rke/ rke
+      # cp /root/.ssh/authorized_keys /home/rke/.ssh
+      # chown rke /home/rke -R
     SHELL
     end
     config.vm.synced_folder ".", "/home/"
